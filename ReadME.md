@@ -1,0 +1,3 @@
+# Urban Bikeway Obstacle Detection using Smartphone
+
+The "Untitled Application" is a system that uses depth perception and information from a handlebar-mounted smartphone's sensors to detect and classify obstacles on urban bikeways. It employs machine learning algorithms and is measured based on the 3 feet rule of bike safety. The study will evaluate the system's accuracy using at least 10,000 training images captured during actual bike rides in the urban city of Berlin. The system will only cover ground objects.

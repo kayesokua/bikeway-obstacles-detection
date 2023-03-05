@@ -1,0 +1,10 @@
+# Ignore venv and drafted directories
+venv/
+papers/
+__pycache__/
+*.pyc
+**/.DS_STORE
+
+*.npy
+*.heic
+*.png
