@@ -2,9 +2,13 @@
 venv/
 papers/
 __pycache__/
+checkpoint/
+logs/
 *.pyc
 **/.DS_STORE
 
 *.npy
 *.heic
 *.png
+*.h5
+*.log
