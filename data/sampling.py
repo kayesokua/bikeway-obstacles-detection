@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pyheif
 from PIL import Image, ImageOps
-
+import cv2
 from helpers import *
 
 @measure_elapsed_time
@@ -58,7 +58,7 @@ def convert_heic_to_rgb(input_dir, output_dir, color_count):
     print(f"{i} HEIC file/s converted to RGB")
 
 @measure_elapsed_time
-def create_rgba_images(rgb_dir, depth_dir, output_dir):
+def create_rgba_images(rgb_dir, depth_dir, output_dir, scale=1):
     create_output_dir_if_not_exists(output_dir)
 
     rgb_files = [f for f in os.listdir(rgb_dir) if f.lower().endswith(('.png'))]
@@ -67,17 +67,18 @@ def create_rgba_images(rgb_dir, depth_dir, output_dir):
     for rgb_filename in rgb_files:
         rgb_path = os.path.join(rgb_dir, rgb_filename)
         depth_path = os.path.join(depth_dir, rgb_filename)
-        with Image.open(rgb_path) as rgb_img, Image.open(depth_path).convert("L") as depth_img:
-            depth_data = np.asarray(depth_img)
-            depth_data_norm = (depth_data - np.min(depth_data)) / (np.max(depth_data) - np.min(depth_data)) * 255
-            alpha_channel = Image.fromarray(depth_data_norm.astype(np.uint8))
-            # make alpha channel and rgb channels the same size
-            if rgb_img.size != alpha_channel.size:
-                rgb_img = rgb_img.resize(alpha_channel.size)
-            rgba_img = Image.merge("RGBA", tuple(rgb_img.split()[:3]) + (alpha_channel,))
-            rgba_img = rgba_img.resize((int(rgba_img.size[0]*0.25), int(rgba_img.size[1]*0.25)))
-            output_path = os.path.join(output_dir, os.path.splitext(rgb_filename)[0] + ".png")
-            rgba_img.save(output_path, format="PNG")
+        rgb_data = cv2.imread(rgb_path)
+        depth_data = cv2.imread(depth_path, cv2.IMREAD_GRAYSCALE)
+        depth_data_norm = (depth_data - np.min(depth_data)) / (np.max(depth_data) - np.min(depth_data)) * 255
+        alpha_channel = depth_data_norm.astype(np.uint8)
+        # make alpha channel and rgb channels the same size
+        if rgb_data.shape[:2] != alpha_channel.shape[:2]:
+            rgb_data = cv2.resize(rgb_data, alpha_channel.shape[:2])
+        rgba_data = cv2.cvtColor(rgb_data, cv2.COLOR_BGR2RGBA)
+        rgba_data[:, :, 3] = alpha_channel
+        rgba_data = cv2.resize(rgba_data, (int(rgba_data.shape[1]*scale), int(rgba_data.shape[0]*scale)))
+        output_path = os.path.join(output_dir, os.path.splitext(rgb_filename)[0] + ".png")
+        cv2.imwrite(output_path, rgba_data)
 
     print(f"{len(rgb_files)} RGBA image/s created")
 
@@ -95,4 +96,9 @@ def check_if_not_portrait_orientation(input_dir):
 #convert_heic_to_rgb("data/train-heic", "data/train-rgb", color_count=256)
 #check_if_not_portrait_orientation("data/train-depth")
 
-#create_rgba_images("data/train-rgb", "data/train-depth", "data/train-rgbd/")
+# create_rgba_images(
+#     rgb_dir="data/train-rgb",
+#     depth_dir="data/train-depth",
+#     output_dir="data/train-rgbd/",
+# scale=0.50)
+
